@@ -1,5 +1,7 @@
 # RustFS Homebrew Tap
 
+English | [简体中文](README_ZH.md)
+
 This is the official Homebrew Tap for [RustFS](https://github.com/rustfs/rustfs), a command-line tool for Object Storage
 written in Rust.
 

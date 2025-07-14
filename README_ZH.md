@@ -1,6 +1,8 @@
 # RustFS Homebrew Tap
 
-本仓库是 [RustFS](https://github.com/rustfs/rustfs) 的官方 Homebrew Tap。`RustFS` 是一个使用 Rust 编写的命令行对象存储工具。
+[English](README.md) | 简体中文
+
+本仓库是 [RustFS](https://github.com/rustfs/rustfs) 的官方 Homebrew Tap。`RustFS` 是一个使用 Rust 构建的高性能分布式对象存储软件。
 
 ## 安装
 
