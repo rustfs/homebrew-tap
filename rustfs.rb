@@ -129,7 +129,7 @@ class Rustfs < Formula
 
     if target
       system "rustup", "target", "add", target
-      cargo_args.concat(["--target", target])
+      cargo_args += ["--target", target]
       install_path = "target/#{target}/release/rustfs"
     end
 
