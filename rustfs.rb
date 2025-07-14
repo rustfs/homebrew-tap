@@ -121,8 +121,10 @@ class Rustfs < Formula
     install_message = build.head? ? "Installing from HEAD (latest source)..." : "Installing from source code..."
     ohai install_message
 
+    ENV["CARGO_BUILD_JOBS"] = ENV.make_jobs.to_s
+
     target = rust_target
-    cargo_args = std_cargo_args(path: buildpath, bin: "rustfs")
+    cargo_args = %w[--release --bin rustfs]
     install_path = "target/release/rustfs"
 
     if target
