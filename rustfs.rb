@@ -9,7 +9,6 @@ class Rustfs < Formula
   license "Apache-2.0"
   head "https://github.com/#{GITHUB_REPO}.git", branch: "main", shallow: false
 
-  # 仅在需要从源代码构建时依赖 Rust 等构建工具
   depends_on "rust" => :build, if: :needs_source_build?
   depends_on "protobuf" => :build, if: :needs_source_build?
   depends_on "flatbuffers" => :build, if: :needs_source_build?
