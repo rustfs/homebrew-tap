@@ -21,13 +21,19 @@ class Rustfs < Formula
   license "Apache-2.0"
   head "https://github.com/#{GITHUB_REPO}.git", branch: "main", shallow: false
 
-  def install
-    install_method = determine_install_method
+  # 标准的构建依赖声明。Homebrew 会在需要时自动处理。
+  depends_on "rust" => :build
+  depends_on "protobuf" => :build
+  depends_on "flatbuffers" => :build
+  depends_on "pkg-config" => :build if OS.linux?
+  depends_on "openssl@3" if OS.linux?
 
-    case install_method
-    when "binary"
+  def install
+    # 如果二进制可用，且用户未强制从源码构建，则使用二进制安装
+    # 注意：`build.head?` 会隐式地使 `build.from_source?` 为 true
+    if binary_available? && !build.from_source?
       install_from_binary
-    when "source", "head"
+    else
       install_from_source
     end
   rescue StandardError => e
@@ -35,7 +41,11 @@ class Rustfs < Formula
   end
 
   def caveats
-    install_method = determine_install_method
+    install_method = if build.from_source? || build.head?
+                       "source"
+                     else
+                       "binary"
+                     end
     platform_info = "#{OS.mac? ? "macOS" : "Linux"} (#{Hardware::CPU.arch})"
 
     s = <<~EOS
@@ -52,7 +62,7 @@ class Rustfs < Formula
       rustfs --version
     EOS
 
-    if install_method == "head"
+    if build.head?
       s += "\n\nNote: You have installed the latest development version from HEAD."
     end
 
@@ -66,56 +76,13 @@ class Rustfs < Formula
 
   private
 
-  def determine_install_method
-    return "head" if build.head?
-    binary_available? ? "binary" : "source"
-  end
-
   def platform_target
-    @platform_target ||= begin
-                           current_platform = OS.mac? ? :macos : :linux
-                           arch = Hardware::CPU.arm? ? :arm : :intel
-                           PLATFORM_MAPPING.dig(current_platform, arch)
-                         end
+    @platform_target ||= PLATFORM_MAPPING.dig(OS.mac? ? :macos : :linux, Hardware::CPU.arm? ? :arm : :intel)
   end
 
   def binary_available?
     target = platform_target
     target && BINARY_CONFIGS.key?(target)
-  end
-
-  def ensure_build_dependencies
-    ohai "Checking build dependencies for source installation..."
-    missing_deps = []
-
-    missing_deps << "rust (cargo)" unless command_exists?("cargo")
-    missing_deps << "protobuf (protoc)" unless command_exists?("protoc")
-    missing_deps << "flatbuffers (flatc)" unless command_exists?("flatc")
-
-    if OS.linux?
-      missing_deps << "pkg-config" unless command_exists?("pkg-config")
-      missing_deps << "openssl (development libraries)" unless pkg_config_exists?("openssl")
-    end
-
-    return if missing_deps.empty?
-
-    odie <<~EOS
-      Missing build dependencies for source installation:
-      #{missing_deps.map { |dep| "- #{dep}" }.join("\n")}
-
-      Please install them first. For example, on macOS:
-        brew install rust protobuf flatbuffers
-      Or on Debian/Ubuntu:
-        sudo apt-get install cargo protobuf-compiler flatbuffers-compiler pkg-config libssl-dev
-    EOS
-  end
-
-  def command_exists?(command)
-    quiet_system("which", command)
-  end
-
-  def pkg_config_exists?(package)
-    quiet_system("pkg-config", "--exists", package)
   end
 
   def install_from_binary
@@ -135,19 +102,16 @@ class Rustfs < Formula
   end
 
   def install_from_source
-    ensure_build_dependencies
     install_message = build.head? ? "Installing from HEAD (latest source)..." : "Installing from source code..."
     ohai install_message
 
-    # 优化 Rust 编译过程
     ENV["CARGO_BUILD_JOBS"] = ENV.make_jobs.to_s
-    ENV.deparallelize # Homebrew 建议在 cargo build 期间调用
+    ENV.deparallelize
 
     target = platform_target
     cargo_args = %w[build --release --bin rustfs]
     install_path = "target/release/rustfs"
 
-    # 在 Linux 上，明确指定 target 以确保正确编译
     if OS.linux? && target
       system "rustup", "target", "add", target
       cargo_args.concat(["--target", target])
