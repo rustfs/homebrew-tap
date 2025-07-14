@@ -27,22 +27,33 @@ class Rustfs < Formula
   depends_on "openssl" if OS.linux?
   depends_on "pkg-config" if OS.linux?
 
-  def setup_binary_resources
-    current_platform = OS.mac? ? :macos : :linux
-    arch = Hardware::CPU.arm? ? :arm : :intel
-
-    target = PLATFORM_MAPPING.dig(current_platform, arch)
-    return unless target && BINARY_CONFIGS[target]
-
-    arch_part, platform_part = target.split('-', 2)
-    resource "binary" do
-      url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-#{arch_part}-#{platform_part}.zip"
-      sha256 BINARY_CONFIGS[target]
+  on_macos do
+    if Hardware::CPU.arm?
+      resource "binary" do
+        url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-aarch64-apple-darwin.zip"
+        sha256 BINARY_CONFIGS["aarch64-apple-darwin"]
+      end
+    elsif Hardware::CPU.intel?
+      resource "binary" do
+        url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-x86_64-apple-darwin.zip"
+        sha256 BINARY_CONFIGS["x86_64-apple-darwin"]
+      end
     end
   end
 
-  on_macos { setup_binary_resources }
-  on_linux { setup_binary_resources }
+  on_linux do
+    if Hardware::CPU.arm?
+      resource "binary" do
+        url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-aarch64-unknown-linux-musl.zip"
+        sha256 BINARY_CONFIGS["aarch64-unknown-linux-musl"]
+      end
+    elsif Hardware::CPU.intel?
+      resource "binary" do
+        url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-x86_64-unknown-linux-musl.zip"
+        sha256 BINARY_CONFIGS["x86_64-unknown-linux-musl"]
+      end
+    end
+  end
 
   def install
     @install_method = resource("binary").exist? ? "binary" : "source"
