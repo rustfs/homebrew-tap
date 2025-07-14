@@ -21,30 +21,33 @@ class Rustfs < Formula
   license "Apache-2.0"
   head "https://github.com/#{GITHUB_REPO}.git", branch: "main", shallow: false
 
-  on_macos do
-    if Hardware::CPU.arm?
-      resource "binary" do
-        url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-aarch64-apple-darwin.zip"
-        sha256 BINARY_CONFIGS["aarch64-apple-darwin"]
-      end
-    elsif Hardware::CPU.intel?
-      resource "binary" do
-        url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-x86_64-apple-darwin.zip"
-        sha256 BINARY_CONFIGS["x86_64-apple-darwin"]
+  # 只在非 HEAD 安装时定义二进制资源
+  unless build.head?
+    on_macos do
+      if Hardware::CPU.arm?
+        resource "binary" do
+          url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-aarch64-apple-darwin.zip"
+          sha256 BINARY_CONFIGS["aarch64-apple-darwin"]
+        end
+      elsif Hardware::CPU.intel?
+        resource "binary" do
+          url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-x86_64-apple-darwin.zip"
+          sha256 BINARY_CONFIGS["x86_64-apple-darwin"]
+        end
       end
     end
-  end
 
-  on_linux do
-    if Hardware::CPU.arm?
-      resource "binary" do
-        url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-aarch64-unknown-linux-musl.zip"
-        sha256 BINARY_CONFIGS["aarch64-unknown-linux-musl"]
-      end
-    elsif Hardware::CPU.intel?
-      resource "binary" do
-        url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-x86_64-unknown-linux-musl.zip"
-        sha256 BINARY_CONFIGS["x86_64-unknown-linux-musl"]
+    on_linux do
+      if Hardware::CPU.arm?
+        resource "binary" do
+          url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-aarch64-unknown-linux-musl.zip"
+          sha256 BINARY_CONFIGS["aarch64-unknown-linux-musl"]
+        end
+      elsif Hardware::CPU.intel?
+        resource "binary" do
+          url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-x86_64-unknown-linux-musl.zip"
+          sha256 BINARY_CONFIGS["x86_64-unknown-linux-musl"]
+        end
       end
     end
   end
@@ -94,7 +97,16 @@ class Rustfs < Formula
     arch = Hardware::CPU.arm? ? :arm : :intel
     target = PLATFORM_MAPPING.dig(current_platform, arch)
 
-    target && BINARY_CONFIGS[target]
+    # 检查是否有对应的二进制资源
+    target && BINARY_CONFIGS[target] && has_binary_resource?
+  end
+
+  def has_binary_resource?
+    # 尝试获取二进制资源，如果失败则说明没有定义
+    resource("binary")
+    true
+  rescue FormulaUnavailableError
+    false
   end
 
   def ensure_build_dependencies
@@ -102,24 +114,24 @@ class Rustfs < Formula
 
     missing_deps = []
 
-    unless system "which", "cargo", out: File::NULL, err: File::NULL
+    unless quiet_system "which", "cargo"
       missing_deps << "rust (cargo command not found)"
     end
 
-    unless system "which", "protoc", out: File::NULL, err: File::NULL
+    unless quiet_system "which", "protoc"
       missing_deps << "protobuf (protoc command not found)"
     end
 
-    unless system "which", "flatc", out: File::NULL, err: File::NULL
+    unless quiet_system "which", "flatc"
       missing_deps << "flatbuffers (flatc command not found)"
     end
 
     if OS.linux?
-      unless system "which", "pkg-config", out: File::NULL, err: File::NULL
+      unless quiet_system "which", "pkg-config"
         missing_deps << "pkg-config"
       end
 
-      unless system "pkg-config", "--exists", "openssl", out: File::NULL, err: File::NULL
+      unless quiet_system "pkg-config", "--exists", "openssl"
         missing_deps << "openssl (development libraries)"
       end
     end
@@ -135,8 +147,12 @@ class Rustfs < Formula
       Please install the missing dependencies first:
       #{install_suggestions}
 
-      Alternatively, try forcing a binary installation if available.
+      Alternatively, install without --HEAD to use binary if available.
     EOS
+  end
+
+  def quiet_system(*args)
+    system(*args, out: :close, err: :close)
   end
 
   def build_install_suggestions(missing_deps)
@@ -177,12 +193,10 @@ class Rustfs < Formula
   end
 
   def configure_git_for_large_repos
-    system "git", "config", "--global", "http.postBuffer", "524288000"
-    system "git", "config", "--global", "http.lowSpeedLimit", "0"
-    system "git", "config", "--global", "http.lowSpeedTime", "999999"
-    system "git", "config", "--global", "core.preloadindex", "true"
-  rescue StandardError
-    # 忽略 Git 配置失败，继续安装
+    quiet_system "git", "config", "--global", "http.postBuffer", "524288000"
+    quiet_system "git", "config", "--global", "http.lowSpeedLimit", "0"
+    quiet_system "git", "config", "--global", "http.lowSpeedTime", "999999"
+    quiet_system "git", "config", "--global", "core.preloadindex", "true"
   end
 
   def install_from_binary
