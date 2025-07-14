@@ -58,7 +58,7 @@ class Rustfs < Formula
   def install
     configure_git_for_large_repos
 
-    @install_method = resource("binary").exist? ? "binary" : "source"
+    @install_method = binary_available? ? "binary" : "source"
 
     case @install_method
     when "binary"
@@ -84,6 +84,17 @@ class Rustfs < Formula
 
   private
 
+  def binary_available?
+    return false unless OS.mac? || OS.linux?
+    return false unless Hardware::CPU.arm? || Hardware::CPU.intel?
+
+    current_platform = OS.mac? ? :macos : :linux
+    arch = Hardware::CPU.arm? ? :arm : :intel
+    target = PLATFORM_MAPPING.dig(current_platform, arch)
+
+    target && BINARY_CONFIGS[target]
+  end
+
   def configure_git_for_large_repos
     system "git", "config", "--global", "http.postBuffer", "524288000"
     system "git", "config", "--global", "http.lowSpeedLimit", "0"
@@ -91,7 +102,7 @@ class Rustfs < Formula
     system "git", "config", "--global", "core.preloadindex", "true"
     system "git", "config", "--global", "core.fscache", "true" if OS.windows?
   rescue StandardError
-    # 忽略 Git 配置失败，继续安装
+    # Ignore Git configuration failed, continue to install
   end
 
   def install_from_binary
@@ -105,7 +116,6 @@ class Rustfs < Formula
 
     setup_target(target) if target
 
-    # 使用重试机制执行 cargo build
     execute_with_retry do
       system "cargo", *cargo_args
     end
@@ -121,7 +131,7 @@ class Rustfs < Formula
       retry_count += 1
       if retry_count <= max_retries
         ohai "Operation failed, retrying (#{retry_count}/#{max_retries})..."
-        sleep retry_count * 2 # 递增延迟
+        sleep retry_count * 2
         retry
       else
         raise e
