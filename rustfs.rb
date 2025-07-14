@@ -128,7 +128,6 @@ class Rustfs < Formula
     install_path = "target/release/rustfs"
 
     if target
-      system "rustup", "target", "add", target
       cargo_args += ["--target", target]
       install_path = "target/#{target}/release/rustfs"
     end
