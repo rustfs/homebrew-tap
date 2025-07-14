@@ -12,13 +12,14 @@ class Rustfs < Formula
   depends_on "rust" => :build
   depends_on "protobuf" => :build
   depends_on "flatbuffers" => :build
-  depends_on "pkg-config" => :build
+  depends_on "pkgconf" => :build
   depends_on "zstd"
-  depends_on "openssl@3", on_linux: true
+  depends_on "openssl@3"
 
   def install
-    # 如果 Homebrew 不使用官方 bottle (例如 --build-from-source) 且我们有二进制包，则使用它。
-    # 安装 --HEAD 时，build.bottle? 为 false，将从源码构建。
+    # 确保 cargo 在编译 openssl-sys crate 时能找到正确的库
+    ENV["OPENSSL_DIR"] = Formula["openssl@3"].opt_prefix
+
     if binary_available? && build.bottle? && !build.head?
       install_from_binary
     else
@@ -120,11 +121,8 @@ class Rustfs < Formula
     install_message = build.head? ? "Installing from HEAD (latest source)..." : "Installing from source code..."
     ohai install_message
 
-    ENV["CARGO_BUILD_JOBS"] = ENV.make_jobs.to_s
-    ENV.deparallelize
-
     target = rust_target
-    cargo_args = %w[build --release --bin rustfs]
+    cargo_args = std_cargo_args(path: buildpath, bin: "rustfs")
     install_path = "target/release/rustfs"
 
     if target
@@ -133,7 +131,7 @@ class Rustfs < Formula
       install_path = "target/#{target}/release/rustfs"
     end
 
-    system "cargo", *cargo_args
+    system "cargo", "build", *cargo_args
     bin.install install_path
   end
 end
