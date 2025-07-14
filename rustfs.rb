@@ -63,25 +63,19 @@ class Rustfs < Formula
 
   def binary_info
     @binary_info ||= begin
-                       target, sha256 = nil
-                       on_macos do
+                       target, sha256 = on_macos do
                          on_arm do
-                           target = "aarch64-apple-darwin"
-                           sha256 = "ac6bee72fb24fab611bdc7c427b7c174c86d543d1ec7c58cb7eeb89fe62d671d"
+                           ["aarch64-apple-darwin", "ac6bee72fb24fab611bdc7c427b7c174c86d543d1ec7c58cb7eeb89fe62d671d"]
                          end
                          on_intel do
-                           target = "x86_64-apple-darwin"
-                           sha256 = "8e30fb72a59f0a657c8f4eecde69485596cb83d6eb831e54515a81b5d0b6d071"
+                           ["x86_64-apple-darwin", "8e30fb72a59f0a657c8f4eecde69485596cb83d6eb831e54515a81b5d0b6d071"]
                          end
-                       end
-                       on_linux do
+                       end || on_linux do
                          on_arm do
-                           target = "aarch64-unknown-linux-musl"
-                           sha256 = "0c332a1c9f05330ac24598dd29ddc15819c5a5783b8e95ef513a7fa3921675b1"
+                           ["aarch64-unknown-linux-musl", "0c332a1c9f05330ac24598dd29ddc15819c5a5783b8e95ef513a7fa3921675b1"]
                          end
                          on_intel do
-                           target = "x86_64-unknown-linux-musl"
-                           sha256 = "96081fa567496aa95c755cc4ff8e3366adc7f7da9db72525e18a57bf5b44d607"
+                           ["x86_64-unknown-linux-musl", "96081fa567496aa95c755cc4ff8e3366adc7f7da9db72525e18a57bf5b44d607"]
                          end
                        end
 
@@ -95,18 +89,22 @@ class Rustfs < Formula
   end
 
   def rust_target
-    target, = binary_info
-    target
+    binary_info[0]
+  end
+
+  def binary_url_and_sha
+    binary_info[1..2]
   end
 
   def binary_available?
-    _, url, sha256 = binary_info
-    !url.nil? && !sha256.nil?
+    binary_url_and_sha.all?
   end
 
   def install_from_binary
     ohai "Installing from pre-compiled binary..."
-    _, url, sha256 = binary_info
+    url, sha256 = binary_url_and_sha
+
+    odie "Pre-compiled binary not available for this platform." unless url
 
     resource "binary" do
       url url
