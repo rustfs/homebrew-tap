@@ -30,8 +30,8 @@ class Rustfs < Formula
 
   def install
     # 如果二进制可用，且用户未强制从源码构建，则使用二进制安装
-    # 注意：`build.head?` 会隐式地使 `build.from_source?` 为 true
-    if binary_available? && !build.from_source?
+    # 注意：`build.head?` 会隐式地触发源码构建
+    if binary_available? && !ARGV.build_from_source? && !build.head?
       install_from_binary
     else
       install_from_source
@@ -41,7 +41,7 @@ class Rustfs < Formula
   end
 
   def caveats
-    install_method = if build.from_source? || build.head?
+    install_method = if ARGV.build_from_source? || build.head?
                        "source"
                      else
                        "binary"
