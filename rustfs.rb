@@ -19,7 +19,7 @@ class Rustfs < Formula
   url "https://github.com/#{GITHUB_REPO}/archive/refs/tags/#{VERSION}.tar.gz"
   sha256 "25254ec106022f290b7e74c8f8ada879cdc2cf2953bd170258e1fab54edf14c3"
   license "Apache-2.0"
-  head "https://github.com/#{GITHUB_REPO}.git", branch: "main"
+  head "https://github.com/#{GITHUB_REPO}.git", branch: "main", shallow: false
 
   depends_on "rust" => :build
   depends_on "protobuf" => :build
@@ -56,6 +56,8 @@ class Rustfs < Formula
   end
 
   def install
+    configure_git_for_large_repos
+
     @install_method = resource("binary").exist? ? "binary" : "source"
 
     case @install_method
@@ -82,6 +84,16 @@ class Rustfs < Formula
 
   private
 
+  def configure_git_for_large_repos
+    system "git", "config", "--global", "http.postBuffer", "524288000"
+    system "git", "config", "--global", "http.lowSpeedLimit", "0"
+    system "git", "config", "--global", "http.lowSpeedTime", "999999"
+    system "git", "config", "--global", "core.preloadindex", "true"
+    system "git", "config", "--global", "core.fscache", "true" if OS.windows?
+  rescue StandardError
+    # 忽略 Git 配置失败，继续安装
+  end
+
   def install_from_binary
     resource("binary").stage { bin.install "rustfs" }
   end
@@ -92,8 +104,29 @@ class Rustfs < Formula
     install_path = build_install_path(target)
 
     setup_target(target) if target
-    system "cargo", *cargo_args
+
+    # 使用重试机制执行 cargo build
+    execute_with_retry do
+      system "cargo", *cargo_args
+    end
+
     bin.install install_path
+  end
+
+  def execute_with_retry(max_retries: 3)
+    retry_count = 0
+    begin
+      yield
+    rescue StandardError => e
+      retry_count += 1
+      if retry_count <= max_retries
+        ohai "Operation failed, retrying (#{retry_count}/#{max_retries})..."
+        sleep retry_count * 2 # 递增延迟
+        retry
+      else
+        raise e
+      end
+    end
   end
 
   def determine_target
