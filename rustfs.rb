@@ -17,7 +17,6 @@ class Rustfs < Formula
   depends_on "openssl@3"
 
   def install
-    # 确保 cargo 在编译 openssl-sys crate 时能找到正确的库
     ENV["OPENSSL_DIR"] = Formula["openssl@3"].opt_prefix
 
     if binary_available? && build.bottle? && !build.head?
@@ -127,7 +126,8 @@ class Rustfs < Formula
     cargo_args = %w[--release --bin rustfs]
     install_path = "target/release/rustfs"
 
-    if target
+    if OS.linux? && target
+      system "rustup", "target", "add", target
       cargo_args += ["--target", target]
       install_path = "target/#{target}/release/rustfs"
     end
