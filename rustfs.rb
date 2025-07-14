@@ -1,4 +1,4 @@
-class RustFS < Formula
+class Rustfs < Formula
   desc "A command-line tool for Object written in Rust"
   homepage "https://rustfs.com"
 
@@ -25,6 +25,20 @@ class RustFS < Formula
 
   def install
     bin.install "rustfs"
+  end
+
+  def caveats
+    <<~EOS
+      Thank you for installing RustFS!
+
+      You can get started with the following command:
+
+      # View all available commands and help information
+      rustfs --help
+
+      # (Add more specific usage examples here)
+      # For example: rustfs <subcommand> [options]
+    EOS
   end
 
   test do
