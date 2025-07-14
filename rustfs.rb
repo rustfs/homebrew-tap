@@ -19,7 +19,7 @@ class Rustfs < Formula
   def install
     ENV["OPENSSL_DIR"] = Formula["openssl@3"].opt_prefix
 
-    if binary_available? && build.bottle? && !build.head?
+    if binary_available? && !build.head?
       install_from_binary
     else
       install_from_source
