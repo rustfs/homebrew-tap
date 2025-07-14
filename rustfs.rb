@@ -29,7 +29,8 @@ class Rustfs < Formula
   end
 
   def caveats
-    install_method = if !build.bottle? || build.head?
+    # !build.bottle? || build.head?
+    install_method = if build.head? || !binary_available?
                        "source"
                      else
                        "binary"
