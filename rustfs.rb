@@ -21,9 +21,6 @@ class Rustfs < Formula
   license "Apache-2.0"
   head "https://github.com/#{GITHUB_REPO}.git", branch: "main", shallow: false
 
-  # 移除条件依赖，改为运行时检查
-  # 只有在源码安装时才会检查这些依赖
-
   on_macos do
     if Hardware::CPU.arm?
       resource "binary" do
@@ -53,12 +50,12 @@ class Rustfs < Formula
   end
 
   def install
-    @install_method = binary_available? ? "binary" : "source"
+    @install_method = determine_install_method
 
     case @install_method
     when "binary"
       install_from_binary
-    when "source"
+    when "source", "head"
       ensure_build_dependencies
       configure_git_for_large_repos
       install_from_source
@@ -81,7 +78,15 @@ class Rustfs < Formula
 
   private
 
+  def determine_install_method
+    return "head" if build.head?
+    binary_available? ? "binary" : "source"
+  end
+
   def binary_available?
+    # HEAD 安装强制使用源码编译
+    return false if build.head?
+
     return false unless OS.mac? || OS.linux?
     return false unless Hardware::CPU.arm? || Hardware::CPU.intel?
 
@@ -97,28 +102,23 @@ class Rustfs < Formula
 
     missing_deps = []
 
-    # 检查 Rust/Cargo
     unless system "which", "cargo", out: File::NULL, err: File::NULL
       missing_deps << "rust (cargo command not found)"
     end
 
-    # 检查 protobuf
     unless system "which", "protoc", out: File::NULL, err: File::NULL
       missing_deps << "protobuf (protoc command not found)"
     end
 
-    # 检查 flatbuffers
     unless system "which", "flatc", out: File::NULL, err: File::NULL
       missing_deps << "flatbuffers (flatc command not found)"
     end
 
     if OS.linux?
-      # 检查 pkg-config
       unless system "which", "pkg-config", out: File::NULL, err: File::NULL
         missing_deps << "pkg-config"
       end
 
-      # 检查 openssl
       unless system "pkg-config", "--exists", "openssl", out: File::NULL, err: File::NULL
         missing_deps << "openssl (development libraries)"
       end
@@ -126,7 +126,6 @@ class Rustfs < Formula
 
     return if missing_deps.empty?
 
-    # 生成安装建议
     install_suggestions = build_install_suggestions(missing_deps)
 
     odie <<~EOS
@@ -192,7 +191,9 @@ class Rustfs < Formula
   end
 
   def install_from_source
-    ohai "Installing from source code..."
+    install_message = build.head? ? "Installing from HEAD (latest source)..." : "Installing from source code..."
+    ohai install_message
+
     target = determine_target
     cargo_args = build_cargo_args(target)
     install_path = build_install_path(target)
@@ -262,7 +263,7 @@ class CaveatsGenerator
 
   def header_section
     platform_info = "#{OS.mac? ? 'macOS' : 'Linux'} (#{Hardware::CPU.arch})"
-    install_method = @formula.instance_variable_get(:@install_method) || "unknown"
+    install_method = determine_install_method
 
     <<~EOS.chomp
       Thank you for installing rustfs!
@@ -300,7 +301,7 @@ class CaveatsGenerator
 
   def collect_additional_info
     info = []
-    install_method = @formula.instance_variable_get(:@install_method)
+    install_method = determine_install_method
 
     case install_method
     when "binary"
@@ -309,6 +310,9 @@ class CaveatsGenerator
     when "source"
       info << "Compiled from source code with all dependencies checked."
       info << "Build dependencies were verified before compilation."
+    when "head"
+      info << "Installed from HEAD (latest development version)."
+      info << "Compiled from the latest source code."
     end
 
     info << "This is an alpha release. Please report issues to GitHub." if Rustfs::VERSION.include?("alpha")
@@ -320,5 +324,16 @@ class CaveatsGenerator
     tips << "Set RUSTFS_THREADS=#{Hardware::CPU.cores} for optimal threading." if OS.linux?
     tips << "ARM-optimized binary provides excellent performance on Apple Silicon." if Hardware::CPU.arm?
     tips
+  end
+
+  def determine_install_method
+    return "head" if @formula.build.head?
+
+    # 重新计算安装方法
+    if @formula.send(:binary_available?)
+      "binary"
+    else
+      "source"
+    end
   end
 end
