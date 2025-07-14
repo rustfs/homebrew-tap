@@ -21,15 +21,8 @@ class Rustfs < Formula
   license "Apache-2.0"
   head "https://github.com/#{GITHUB_REPO}.git", branch: "main", shallow: false
 
-  # 只有在没有二进制资源时才需要构建依赖
-  depends_on "rust" => :build if build.from_source?
-  depends_on "protobuf" => :build if build.from_source?
-  depends_on "flatbuffers" => :build if build.from_source?
-
-  on_linux do
-    depends_on "openssl" if build.from_source?
-    depends_on "pkg-config" if build.from_source?
-  end
+  # 移除条件依赖，改为运行时检查
+  # 只有在源码安装时才会检查这些依赖
 
   on_macos do
     if Hardware::CPU.arm?
@@ -62,14 +55,12 @@ class Rustfs < Formula
   def install
     @install_method = binary_available? ? "binary" : "source"
 
-    # 只有源码安装时才配置 Git
-    configure_git_for_large_repos if @install_method == "source"
-
     case @install_method
     when "binary"
       install_from_binary
     when "source"
-      install_dependencies_if_needed
+      ensure_build_dependencies
+      configure_git_for_large_repos
       install_from_source
     end
   rescue StandardError => e
@@ -101,36 +92,89 @@ class Rustfs < Formula
     target && BINARY_CONFIGS[target]
   end
 
-  def install_dependencies_if_needed
-    # 运行时检查并安装必要的依赖
-    ensure_rust_installed
-    ensure_protobuf_installed
-    ensure_flatbuffers_installed
+  def ensure_build_dependencies
+    ohai "Checking build dependencies for source installation..."
+
+    missing_deps = []
+
+    # 检查 Rust/Cargo
+    unless system "which", "cargo", out: File::NULL, err: File::NULL
+      missing_deps << "rust (cargo command not found)"
+    end
+
+    # 检查 protobuf
+    unless system "which", "protoc", out: File::NULL, err: File::NULL
+      missing_deps << "protobuf (protoc command not found)"
+    end
+
+    # 检查 flatbuffers
+    unless system "which", "flatc", out: File::NULL, err: File::NULL
+      missing_deps << "flatbuffers (flatc command not found)"
+    end
 
     if OS.linux?
-      ensure_openssl_installed
-      ensure_pkg_config_installed
+      # 检查 pkg-config
+      unless system "which", "pkg-config", out: File::NULL, err: File::NULL
+        missing_deps << "pkg-config"
+      end
+
+      # 检查 openssl
+      unless system "pkg-config", "--exists", "openssl", out: File::NULL, err: File::NULL
+        missing_deps << "openssl (development libraries)"
+      end
     end
+
+    return if missing_deps.empty?
+
+    # 生成安装建议
+    install_suggestions = build_install_suggestions(missing_deps)
+
+    odie <<~EOS
+      Missing build dependencies for source installation:
+      #{missing_deps.map { |dep| "- #{dep}" }.join("\n")}
+
+      Please install the missing dependencies first:
+      #{install_suggestions}
+
+      Alternatively, try forcing a binary installation if available.
+    EOS
   end
 
-  def ensure_rust_installed
-    system "which", "cargo" or odie "Rust/Cargo is required for source installation"
-  end
+  def build_install_suggestions(missing_deps)
+    suggestions = []
 
-  def ensure_protobuf_installed
-    system "which", "protoc" or odie "Protobuf is required for source installation"
-  end
+    if OS.mac?
+      suggestions << "# Install with Homebrew:"
+      missing_deps.each do |dep|
+        case dep
+        when /rust/
+          suggestions << "brew install rust"
+        when /protobuf/
+          suggestions << "brew install protobuf"
+        when /flatbuffers/
+          suggestions << "brew install flatbuffers"
+        end
+      end
+    elsif OS.linux?
+      suggestions << "# Install with your package manager:"
+      suggestions << "# Ubuntu/Debian:"
+      missing_deps.each do |dep|
+        case dep
+        when /rust/
+          suggestions << "sudo apt-get install cargo rustc"
+        when /protobuf/
+          suggestions << "sudo apt-get install protobuf-compiler"
+        when /flatbuffers/
+          suggestions << "sudo apt-get install flatbuffers-compiler"
+        when /pkg-config/
+          suggestions << "sudo apt-get install pkg-config"
+        when /openssl/
+          suggestions << "sudo apt-get install libssl-dev"
+        end
+      end
+    end
 
-  def ensure_flatbuffers_installed
-    system "which", "flatc" or odie "FlatBuffers is required for source installation"
-  end
-
-  def ensure_openssl_installed
-    system "pkg-config", "--exists", "openssl" or odie "OpenSSL is required for source installation on Linux"
-  end
-
-  def ensure_pkg_config_installed
-    system "which", "pkg-config" or odie "pkg-config is required for source installation on Linux"
+    suggestions.join("\n")
   end
 
   def configure_git_for_large_repos
@@ -261,10 +305,10 @@ class CaveatsGenerator
     case install_method
     when "binary"
       info << "Using pre-compiled binary for optimal performance."
-      info << "No build dependencies were installed."
+      info << "No build dependencies were required."
     when "source"
-      info << "Compiled from source code. Check build logs if you encounter issues."
-      info << "Build dependencies were automatically installed."
+      info << "Compiled from source code with all dependencies checked."
+      info << "Build dependencies were verified before compilation."
     end
 
     info << "This is an alpha release. Please report issues to GitHub." if Rustfs::VERSION.include?("alpha")
