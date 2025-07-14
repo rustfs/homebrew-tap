@@ -9,17 +9,18 @@ class Rustfs < Formula
   license "Apache-2.0"
   head "https://github.com/#{GITHUB_REPO}.git", branch: "main", shallow: false
 
-  depends_on "rust" => :build
-  depends_on "protobuf" => :build
-  depends_on "flatbuffers" => :build
-  depends_on "pkgconf" => :build
+  # 仅在需要从源代码构建时依赖 Rust 等构建工具
+  depends_on "rust" => :build, if: :needs_source_build?
+  depends_on "protobuf" => :build, if: :needs_source_build?
+  depends_on "flatbuffers" => :build, if: :needs_source_build?
+  depends_on "pkgconf" => :build, if: :needs_source_build?
   depends_on "zstd"
   depends_on "openssl@3"
 
   def install
     ENV["OPENSSL_DIR"] = Formula["openssl@3"].opt_prefix
 
-    if binary_available? && !build.head?
+    if binary_available? && !build.from_source? && !build.head?
       install_from_binary
     else
       install_from_source
@@ -29,8 +30,7 @@ class Rustfs < Formula
   end
 
   def caveats
-    # !build.bottle? || build.head?
-    install_method = if build.head? || !binary_available?
+    install_method = if build.from_source? || build.head? || !binary_available?
                        "source"
                      else
                        "binary"
@@ -57,10 +57,14 @@ class Rustfs < Formula
 
   def test
     version_output = shell_output("#{bin}/rustfs --version")
-    assert_match "rustfs #{version}", version_output
+    assert_match "rustfs #{VERSION}", version_output
   end
 
   private
+
+  def needs_source_build?
+    build.from_source? || build.head?
+  end
 
   def binary_info
     @binary_info ||= begin
