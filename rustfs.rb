@@ -29,9 +29,9 @@ class Rustfs < Formula
   depends_on "openssl@3" if OS.linux?
 
   def install
-    # 如果二进制可用，且用户未强制从源码构建，则使用二进制安装
-    # 注意：`build.head?` 会隐式地触发源码构建
-    if binary_available? && !ARGV.build_from_source? && !build.head?
+    # 如果二进制可用且 Homebrew 决定使用它 (build.bottle? is true), 则进行二进制安装。
+    # 否则 (包括 --build-from-source, --HEAD, 或无可用 bottle 的情况), 从源码构建。
+    if binary_available? && build.bottle?
       install_from_binary
     else
       install_from_source
@@ -41,7 +41,7 @@ class Rustfs < Formula
   end
 
   def caveats
-    install_method = if ARGV.build_from_source? || build.head?
+    install_method = if !build.bottle? || build.head?
                        "source"
                      else
                        "binary"
