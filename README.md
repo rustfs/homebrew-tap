@@ -2,8 +2,9 @@
 
 English | [简体中文](README_ZH.md)
 
-This is the official Homebrew Tap for [RustFS](https://github.com/rustfs/rustfs), a command-line tool for Object Storage
-written in Rust.
+This is the official Homebrew Tap
+for [RustFS](https://github.com/rustfs/rustfs), [RustFS](https://github.com/rustfs/rustfs) is a high-performance
+distributed object storage software built using Rust
 
 ## Installation
 
