@@ -21,11 +21,15 @@ class Rustfs < Formula
   license "Apache-2.0"
   head "https://github.com/#{GITHUB_REPO}.git", branch: "main", shallow: false
 
-  depends_on "rust" => :build
-  depends_on "protobuf" => :build
-  depends_on "flatbuffers" => :build
-  depends_on "openssl" if OS.linux?
-  depends_on "pkg-config" if OS.linux?
+  # 只有在没有二进制资源时才需要构建依赖
+  depends_on "rust" => :build if build.from_source?
+  depends_on "protobuf" => :build if build.from_source?
+  depends_on "flatbuffers" => :build if build.from_source?
+
+  on_linux do
+    depends_on "openssl" if build.from_source?
+    depends_on "pkg-config" if build.from_source?
+  end
 
   on_macos do
     if Hardware::CPU.arm?
@@ -56,14 +60,16 @@ class Rustfs < Formula
   end
 
   def install
-    configure_git_for_large_repos
-
     @install_method = binary_available? ? "binary" : "source"
+
+    # 只有源码安装时才配置 Git
+    configure_git_for_large_repos if @install_method == "source"
 
     case @install_method
     when "binary"
       install_from_binary
     when "source"
+      install_dependencies_if_needed
       install_from_source
     end
   rescue StandardError => e
@@ -95,21 +101,54 @@ class Rustfs < Formula
     target && BINARY_CONFIGS[target]
   end
 
+  def install_dependencies_if_needed
+    # 运行时检查并安装必要的依赖
+    ensure_rust_installed
+    ensure_protobuf_installed
+    ensure_flatbuffers_installed
+
+    if OS.linux?
+      ensure_openssl_installed
+      ensure_pkg_config_installed
+    end
+  end
+
+  def ensure_rust_installed
+    system "which", "cargo" or odie "Rust/Cargo is required for source installation"
+  end
+
+  def ensure_protobuf_installed
+    system "which", "protoc" or odie "Protobuf is required for source installation"
+  end
+
+  def ensure_flatbuffers_installed
+    system "which", "flatc" or odie "FlatBuffers is required for source installation"
+  end
+
+  def ensure_openssl_installed
+    system "pkg-config", "--exists", "openssl" or odie "OpenSSL is required for source installation on Linux"
+  end
+
+  def ensure_pkg_config_installed
+    system "which", "pkg-config" or odie "pkg-config is required for source installation on Linux"
+  end
+
   def configure_git_for_large_repos
     system "git", "config", "--global", "http.postBuffer", "524288000"
     system "git", "config", "--global", "http.lowSpeedLimit", "0"
     system "git", "config", "--global", "http.lowSpeedTime", "999999"
     system "git", "config", "--global", "core.preloadindex", "true"
-    system "git", "config", "--global", "core.fscache", "true" if OS.windows?
   rescue StandardError
-    # Ignore Git configuration failed, continue to install
+    # 忽略 Git 配置失败，继续安装
   end
 
   def install_from_binary
+    ohai "Installing from pre-compiled binary..."
     resource("binary").stage { bin.install "rustfs" }
   end
 
   def install_from_source
+    ohai "Installing from source code..."
     target = determine_target
     cargo_args = build_cargo_args(target)
     install_path = build_install_path(target)
@@ -222,8 +261,10 @@ class CaveatsGenerator
     case install_method
     when "binary"
       info << "Using pre-compiled binary for optimal performance."
+      info << "No build dependencies were installed."
     when "source"
       info << "Compiled from source code. Check build logs if you encounter issues."
+      info << "Build dependencies were automatically installed."
     end
 
     info << "This is an alpha release. Please report issues to GitHub." if Rustfs::VERSION.include?("alpha")
