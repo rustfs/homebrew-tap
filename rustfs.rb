@@ -38,6 +38,9 @@ class Rustfs < Formula
 
       # (Add more specific usage examples here)
       # For example: rustfs <subcommand> [options]
+
+      # Check the version
+      rustfs --version
     EOS
   end
 

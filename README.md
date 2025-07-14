@@ -1,29 +1,73 @@
-# homebrew-tap
+# RustFS Homebrew Tap
 
-## 通过 Homebrew 安装 rustfs
+This is the official Homebrew Tap for [RustFS](https://github.com/rustfs/rustfs), a command-line tool for Object Storage
+written in Rust.
+
+## Installation
+
+You can install `RustFS` in several ways.
+
+### Via Homebrew (Recommended)
+
+This is the easiest way to get started.
+
+1. **Add the Tap:**
+   ```sh
+   brew tap rustfs/homebrew-tap
+   ```
+
+2. **Install RustFS:**
+   ```sh
+   brew install rustfs
+   ```
+
+### From Source (For Developers)
+
+If you want to install the latest development version, you can build from source.
 
 ```sh
-brew tap rustfs/homebrew-tap
-brew install rustfs
+brew install --HEAD rustfs
 ```
 
-## 支持平台
+### Manual Installation
 
-- macOS (x86_64, arm64)
-- Linux (x86_64, arm64)
+1. Go to the [GitHub Releases](https://github.com/rustfs/rustfs/releases) page.
+2. Download the appropriate `.zip` archive for your operating system and CPU architecture.
+3. Unzip the archive and move the `RustFS` executable to a directory in your `PATH` (e.g., `/usr/local/bin`).
 
-## 二进制包下载
+## Usage
 
-可在 [GitHub Releases](https://github.com/rustfs/rustfs/releases) 页面下载各平台编译好的二进制包。
+After installation, you can verify it and get help by running:
 
-## 手动安装
+```sh
+# Check the version
+rustfs --version
 
-下载对应平台的 zip 包，解压后将 rustfs 可执行文件放入 PATH 路径下即可。
+# View all available commands
+rustfs --help
+```
 
-## 贡献
+For more detailed usage and documentation, please visit the official website: [https://rustfs.com](https://rustfs.com)
 
-欢迎提交 issue 和 PR。
+## Supported Platforms
+
+We provide pre-compiled binaries for the following platforms:
+
+- **macOS**
+    - Apple Silicon (`arm64`)
+    - Intel (`x86_64`)
+- **Linux**
+    - ARM (`aarch64`)
+    - Intel/AMD (`x86_64`)
+
+## Contributing
+
+Contributions are welcome via Issues and Pull Requests.
+
+- For issues related to this Homebrew Tap, please file them in this repository.
+- For issues or feature requests related to the `RustFS` tool itself, please file them in
+  the [main project repository](https://github.com/rustfs/rustfs).
 
 ## License
 
-本项目采用 Apache-2.0 许可证。
+This project is licensed under the [Apache-2.0](LICENSE) License.
