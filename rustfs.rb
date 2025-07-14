@@ -12,10 +12,13 @@ class Rustfs < Formula
   depends_on "rust" => :build
   depends_on "protobuf" => :build
   depends_on "flatbuffers" => :build
-  depends_on "pkg-config" => :build, on_linux: true
+  depends_on "pkg-config" => :build
+  depends_on "zstd"
   depends_on "openssl@3", on_linux: true
 
   def install
+    # 如果 Homebrew 不使用官方 bottle (例如 --build-from-source) 且我们有二进制包，则使用它。
+    # 安装 --HEAD 时，build.bottle? 为 false，将从源码构建。
     if binary_available? && build.bottle? && !build.head?
       install_from_binary
     else
@@ -58,43 +61,52 @@ class Rustfs < Formula
 
   private
 
-  def rust_target
-    on_macos do
-      return "aarch64-apple-darwin" if Hardware::CPU.arm?
-      return "x86_64-apple-darwin" if Hardware::CPU.intel?
-    end
-    on_linux do
-      return "aarch64-unknown-linux-musl" if Hardware::CPU.arm?
-      return "x86_64-unknown-linux-musl" if Hardware::CPU.intel?
-    end
-    nil
-  end
-
   def binary_info
     @binary_info ||= begin
-                       target = rust_target
-                       break [nil, nil] unless target
+                       target, sha256 = nil
+                       on_macos do
+                         on_arm do
+                           target = "aarch64-apple-darwin"
+                           sha256 = "ac6bee72fb24fab611bdc7c427b7c174c86d543d1ec7c58cb7eeb89fe62d671d"
+                         end
+                         on_intel do
+                           target = "x86_64-apple-darwin"
+                           sha256 = "8e30fb72a59f0a657c8f4eecde69485596cb83d6eb831e54515a81b5d0b6d071"
+                         end
+                       end
+                       on_linux do
+                         on_arm do
+                           target = "aarch64-unknown-linux-musl"
+                           sha256 = "0c332a1c9f05330ac24598dd29ddc15819c5a5783b8e95ef513a7fa3921675b1"
+                         end
+                         on_intel do
+                           target = "x86_64-unknown-linux-musl"
+                           sha256 = "96081fa567496aa95c755cc4ff8e3366adc7f7da9db72525e18a57bf5b44d607"
+                         end
+                       end
 
-                       url = "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-#{target}.zip"
-                       sha256 = case target
-                                when "aarch64-apple-darwin" then "ac6bee72fb24fab611bdc7c427b7c174c86d543d1ec7c58cb7eeb89fe62d671d"
-                                when "x86_64-apple-darwin" then "8e30fb72a59f0a657c8f4eecde69485596cb83d6eb831e54515a81b5d0b6d071"
-                                when "aarch64-unknown-linux-musl" then "0c332a1c9f05330ac24598dd29ddc15819c5a5783b8e95ef513a7fa3921675b1"
-                                when "x86_64-unknown-linux-musl" then "96081fa567496aa95c755cc4ff8e3366adc7f7da9db72525e18a57bf5b44d607"
-                                else nil
-                                end
-                       [url, sha256]
+                       if target && sha256
+                         url = "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-#{target}.zip"
+                         [target, url, sha256]
+                       else
+                         [nil, nil, nil]
+                       end
                      end
   end
 
+  def rust_target
+    target, = binary_info
+    target
+  end
+
   def binary_available?
-    url, sha256 = binary_info
+    _, url, sha256 = binary_info
     !url.nil? && !sha256.nil?
   end
 
   def install_from_binary
     ohai "Installing from pre-compiled binary..."
-    url, sha256 = binary_info
+    _, url, sha256 = binary_info
 
     resource "binary" do
       url url
