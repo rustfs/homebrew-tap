@@ -14,10 +14,6 @@ class Rustfs < Formula
   sha256 "25254ec106022f290b7e74c8f8ada879cdc2cf2953bd170258e1fab54edf14c3"
   license "Apache-2.0"
 
-  # Runtime dependencies
-  # depends_on "zstd"
-  # depends_on "openssl@3"
-
   def install
     url, sha = binary_url_and_sha
     odie "This formula has no pre-compiled binary for your platform: #{system_target}" unless url
@@ -52,7 +48,7 @@ class Rustfs < Formula
          cd rustfs
 
       2. Install dependencies:
-         brew install rust protobuf flatbuffers pkg-conf zstd openssl@3
+         brew install rust protobuf flatbuffers pkg-config zstd openssl@3
 
       3. Compile the project:
          cargo build --release
@@ -71,8 +67,8 @@ class Rustfs < Formula
   end
 
   def test
-    version_output = shell_output("#{bin}/rustfs --version")
-    assert_match "rustfs #{version}", version_output
+    version_output = shell_output("#{bin}/rustfs -V")
+    assert_match "rustfs #{VERSION}", version_output
   end
 
   private
