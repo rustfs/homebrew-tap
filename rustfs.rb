@@ -20,18 +20,6 @@ class Rustfs < Formula
   def install
     ENV["OPENSSL_DIR"] = Formula["openssl@3"].opt_prefix
 
-    if build.head?
-      check_build_tools!
-    else
-      cargo_bin = File.expand_path("~/.cargo/bin")
-      if File.directory?(cargo_bin)
-        ENV.prepend_path "PATH", cargo_bin
-        ohai "Added #{cargo_bin} to PATH for building Rust sources."
-      else
-        opoo "#{cargo_bin} not found. Make sure Rust toolchain is installed and activated."
-      end
-    end
-
     if binary_available? && !build.head? && !build.with?("build-from-source")
       ohai "Installing from pre-compiled binary..."
       install_from_binary
