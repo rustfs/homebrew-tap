@@ -15,8 +15,8 @@ class Rustfs < Formula
   license "Apache-2.0"
 
   # Runtime dependencies
-  depends_on "zstd"
-  depends_on "openssl@3"
+  # depends_on "zstd"
+  # depends_on "openssl@3"
 
   def install
     url, sha = binary_url_and_sha
