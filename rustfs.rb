@@ -24,7 +24,6 @@ class Rustfs < Formula
       ohai "Installing from pre-compiled binary..."
       install_from_binary
     else
-      check_build_tools!
       ohai "Installing from source code..."
       install_from_source
     end
