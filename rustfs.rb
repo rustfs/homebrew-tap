@@ -10,16 +10,30 @@ class Rustfs < Formula
   head "https://github.com/#{GITHUB_REPO}.git", branch: "main", shallow: false
 
   # Only required for source builds
+  depends_on "protobuf" => :build
+  depends_on "flatbuffers" => :build
+  depends_on "pkgconf" => :build
   depends_on "zstd"
   depends_on "openssl@3"
 
   def install
     ENV["OPENSSL_DIR"] = Formula["openssl@3"].opt_prefix
 
+    cargo_bin = File.expand_path("~/.cargo/bin")
+
+    if File.directory?(cargo_bin)
+      ENV.prepend_path "PATH", cargo_bin
+      ohai "Added #{cargo_bin} to PATH for building Rust sources."
+    else
+      opoo "#{cargo_bin} not found. Make sure Rust toolchain is installed and activated."
+    end
+
     if binary_available? && !build.head? && !build.with?("build-from-source")
+      ohai "Installing from pre-compiled binary..."
       install_from_binary
     else
       check_build_tools!
+      ohai "Installing from source code..."
       install_from_source
     end
   rescue StandardError => e
@@ -47,7 +61,37 @@ class Rustfs < Formula
       🛠️ To build from source explicitly:
         brew install --build-from-source rustfs
 
-      #{build.head? ? "\n⚠️  Note: You have installed the latest development version from HEAD." : ""}
+      📦 If you encounter issues, please ensure you have the Rust toolchain installed:
+        brew install rust
+        rustup install stable
+        rustup default stable
+        rustup target add #{rust_target}  # If applicable
+
+      If you choose to build from source, please ensure the Rust toolchain is installed and visible to Homebrew.
+
+      You can install Rust via https://rustup.rs
+
+      For example, you may need to add Rust tools to your PATH:
+        ln -s ~/.cargo/bin/cargo /usr/local/bin/cargo
+        ln -s ~/.cargo/bin/rustc /usr/local/bin/rustc
+
+      For more information, visit: #{homepage}
+      If you prefer to use a precompiled binary, ensure you have the correct architecture:
+      - macOS: aarch64-apple-darwin or x86_64-apple-darwin
+      - Linux: aarch64-unknown-linux-musl or x86_64-unknown-linux-musl
+      If you need to build from source, ensure you have the required dependencies:
+      - protobuf
+      - flatbuffers
+      - pkgconf
+      - zstd
+      - openssl@3
+      For more details, refer to the documentation at: #{homepage}
+      #{binary_available? ? "🔗 Precompiled binary available for your platform: #{binary_url_and_sha[0]}" : "⚠️ No precompiled binary available for your platform."}
+      #{binary_available? ? "SHA256: #{binary_url_and_sha[1]}" : ""}
+      #{binary_available? ? "To use the precompiled binary, ensure it is in your PATH." : ""}
+      #{binary_available? ? "To build from source, ensure you have the Rust toolchain installed." : ""}
+      #{binary_available? ? "To build from source, run: brew install --build-from-source rustfs" : ""}
+      #{binary_available? ? "To build from source, ensure you have the required dependencies installed." : ""}
     EOS
   end
 
@@ -60,7 +104,7 @@ class Rustfs < Formula
 
   def check_build_tools!
     %w[cargo rustc].each do |cmd|
-      odie "#{cmd} not found. Please install Rust toolchain or use precompiled binary." unless which(cmd)
+      odie "#{cmd} not found. Please install the Rust toolchain from https://rustup.rs or use precompiled binary." unless which(cmd)
     end
   end
 
