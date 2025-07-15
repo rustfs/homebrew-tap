@@ -10,22 +10,26 @@ class Rustfs < Formula
   head "https://github.com/#{GITHUB_REPO}.git", branch: "main", shallow: false
 
   # Only required for source builds
-  depends_on "protobuf" => :build
-  depends_on "flatbuffers" => :build
-  depends_on "pkgconf" => :build
+  depends_on "rust" => :build if build.head?
+  depends_on "protobuf" => :build if build.head?
+  depends_on "flatbuffers" => :build if build.head?
+  depends_on "pkgconf" => :build if build.head?
   depends_on "zstd"
   depends_on "openssl@3"
 
   def install
     ENV["OPENSSL_DIR"] = Formula["openssl@3"].opt_prefix
 
-    cargo_bin = File.expand_path("~/.cargo/bin")
-
-    if File.directory?(cargo_bin)
-      ENV.prepend_path "PATH", cargo_bin
-      ohai "Added #{cargo_bin} to PATH for building Rust sources."
+    if build.head?
+      check_build_tools!
     else
-      opoo "#{cargo_bin} not found. Make sure Rust toolchain is installed and activated."
+      cargo_bin = File.expand_path("~/.cargo/bin")
+      if File.directory?(cargo_bin)
+        ENV.prepend_path "PATH", cargo_bin
+        ohai "Added #{cargo_bin} to PATH for building Rust sources."
+      else
+        opoo "#{cargo_bin} not found. Make sure Rust toolchain is installed and activated."
+      end
     end
 
     if binary_available? && !build.head? && !build.with?("build-from-source")
@@ -72,19 +76,21 @@ class Rustfs < Formula
       You can install Rust via https://rustup.rs
 
       For example, you may need to add Rust tools to your PATH:
+      ```base
         ln -s ~/.cargo/bin/cargo /usr/local/bin/cargo
         ln -s ~/.cargo/bin/rustc /usr/local/bin/rustc
+      ```
 
       For more information, visit: #{homepage}
       If you prefer to use a precompiled binary, ensure you have the correct architecture:
-      - macOS: aarch64-apple-darwin or x86_64-apple-darwin
-      - Linux: aarch64-unknown-linux-musl or x86_64-unknown-linux-musl
+        - macOS: aarch64-apple-darwin or x86_64-apple-darwin
+        - Linux: aarch64-unknown-linux-musl or x86_64-unknown-linux-musl
       If you need to build from source, ensure you have the required dependencies:
-      - protobuf
-      - flatbuffers
-      - pkgconf
-      - zstd
-      - openssl@3
+        - protobuf
+        - flatbuffers
+        - pkgconf
+        - zstd
+        - openssl@3
       For more details, refer to the documentation at: #{homepage}
       #{binary_available? ? "🔗 Precompiled binary available for your platform: #{binary_url_and_sha[0]}" : "⚠️ No precompiled binary available for your platform."}
       #{binary_available? ? "SHA256: #{binary_url_and_sha[1]}" : ""}
