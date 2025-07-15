@@ -9,19 +9,17 @@ class Rustfs < Formula
   license "Apache-2.0"
   head "https://github.com/#{GITHUB_REPO}.git", branch: "main", shallow: false
 
-  depends_on "rust" => :build
-  depends_on "protobuf" => :build
-  depends_on "flatbuffers" => :build
-  depends_on "pkgconf" => :build
+  # Only required for source builds
   depends_on "zstd"
   depends_on "openssl@3"
 
   def install
     ENV["OPENSSL_DIR"] = Formula["openssl@3"].opt_prefix
 
-    if binary_available? && !build.head?
+    if binary_available? && !build.head? && !build.with?("build-from-source")
       install_from_binary
     else
+      check_build_tools!
       install_from_source
     end
   rescue StandardError => e
@@ -29,30 +27,28 @@ class Rustfs < Formula
   end
 
   def caveats
-    # !build.bottle? || build.head?
     install_method = if build.head? || !binary_available?
-                       "source"
+                       "source (build from source)"
                      else
-                       "binary"
+                       "binary (precompiled)"
                      end
     platform_info = "#{OS.kernel_name} (#{Hardware::CPU.arch})"
 
-    s = <<~EOS
+    <<~EOS
       Thank you for installing rustfs!
 
       Platform: #{platform_info}
       Installation method: #{install_method}
 
-      You can get started with the following commands:
-      # View all available commands and help information
-      rustfs --help
+      ✅ Get started:
+        rustfs --help        # View all available commands
+        rustfs --version     # Check version
 
-      # Check the version
-      rustfs --version
+      🛠️ To build from source explicitly:
+        brew install --build-from-source rustfs
+
+      #{build.head? ? "\n⚠️  Note: You have installed the latest development version from HEAD." : ""}
     EOS
-
-    s += "\n\nNote: You have installed the latest development version from HEAD." if build.head?
-    s
   end
 
   def test
@@ -62,22 +58,20 @@ class Rustfs < Formula
 
   private
 
+  def check_build_tools!
+    %w[cargo rustc].each do |cmd|
+      odie "#{cmd} not found. Please install Rust toolchain or use precompiled binary." unless which(cmd)
+    end
+  end
+
   def binary_info
     @binary_info ||= begin
                        target, sha256 = on_macos do
-                         on_arm do
-                           ["aarch64-apple-darwin", "ac6bee72fb24fab611bdc7c427b7c174c86d543d1ec7c58cb7eeb89fe62d671d"]
-                         end
-                         on_intel do
-                           ["x86_64-apple-darwin", "8e30fb72a59f0a657c8f4eecde69485596cb83d6eb831e54515a81b5d0b6d071"]
-                         end
+                         on_arm { ["aarch64-apple-darwin", "ac6bee72fb24fab611bdc7c427b7c174c86d543d1ec7c58cb7eeb89fe62d671d"] }
+                         on_intel { ["x86_64-apple-darwin", "8e30fb72a59f0a657c8f4eecde69485596cb83d6eb831e54515a81b5d0b6d071"] }
                        end || on_linux do
-                         on_arm do
-                           ["aarch64-unknown-linux-musl", "0c332a1c9f05330ac24598dd29ddc15819c5a5783b8e95ef513a7fa3921675b1"]
-                         end
-                         on_intel do
-                           ["x86_64-unknown-linux-musl", "96081fa567496aa95c755cc4ff8e3366adc7f7da9db72525e18a57bf5b44d607"]
-                         end
+                         on_arm { ["aarch64-unknown-linux-musl", "0c332a1c9f05330ac24598dd29ddc15819c5a5783b8e95ef513a7fa3921675b1"] }
+                         on_intel { ["x86_64-unknown-linux-musl", "96081fa567496aa95c755cc4ff8e3366adc7f7da9db72525e18a57bf5b44d607"] }
                        end
 
                        if target && sha256
@@ -102,10 +96,10 @@ class Rustfs < Formula
   end
 
   def install_from_binary
-    ohai "Installing from pre-compiled binary..."
+    ohai "Installing from precompiled binary..."
     url, sha256 = binary_url_and_sha
 
-    odie "Pre-compiled binary not available for this platform." unless url
+    odie "No binary available for this platform." unless url
 
     resource "binary" do
       url url
@@ -118,10 +112,11 @@ class Rustfs < Formula
   end
 
   def install_from_source
-    install_message = build.head? ? "Installing from HEAD (latest source)..." : "Installing from source code..."
-    ohai install_message
+    ohai build.head? ? "Installing from HEAD (source)..." : "Installing from source..."
 
+    # Additional build dependencies
     ENV["CARGO_BUILD_JOBS"] = ENV.make_jobs.to_s
+    ENV["OPENSSL_DIR"] = Formula["openssl@3"].opt_prefix
 
     target = rust_target
     cargo_args = %w[--release --bin rustfs]
