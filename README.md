@@ -24,13 +24,19 @@ This is the easiest way to get started.
    brew install rustfs
    ```
 
-### From Source (For Developers)
+[//]: # (### From Source &#40;For Developers&#41;)
 
-If you want to install the latest development version, you can build from source.
+[//]: # ()
 
-```sh
-brew install --HEAD rustfs
-```
+[//]: # (If you want to install the latest development version, you can build from source.)
+
+[//]: # ()
+
+[//]: # (```sh)
+
+[//]: # (brew install --HEAD rustfs)
+
+[//]: # (```)
 
 ### Manual Installation
 
