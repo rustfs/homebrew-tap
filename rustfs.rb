@@ -76,9 +76,12 @@ class Rustfs < Formula
   def system_target
     @system_target ||= begin
                          os = OS.mac? ? "macos" : "linux"
-                         arch = Hardware::CPU.arch == :arm ? "aarch64" : "x86_64"
-                         content = OS.mac? ? "#{arch}-#{os}" : "#{arch}-#{os}-musl"
-                         content
+                         arch = case Hardware::CPU.arch
+                                when :arm, :aarch64 then "aarch64"
+                                else "x86_64"
+                                end
+                         suffix = OS.mac? ? "" : "-musl"
+                         "#{os}-#{arch}#{suffix}"
                        end
   end
 
