@@ -81,12 +81,12 @@ class Rustfs < Formula
                          content
                        end
   end
-  
+
   def binary_url_and_sha
     target = system_target
     sha256 = BINARIES[target]
     return [nil, nil] unless sha256
-    url = "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-#{target}-#{VERSION}.zip"
+    url = "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-#{target}-v#{VERSION}.zip"
     [url, sha256]
   end
 end
