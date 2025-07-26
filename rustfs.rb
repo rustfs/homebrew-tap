@@ -1,17 +1,17 @@
 class Rustfs < Formula
-  VERSION = "1.0.0-alpha.17".freeze
+  VERSION = "1.0.0-alpha.37".freeze
   GITHUB_REPO = "rustfs/rustfs".freeze
   BINARIES = {
-    "aarch64-apple-darwin" => "ac6bee72fb24fab611bdc7c427b7c174c86d543d1ec7c58cb7eeb89fe62d671d",
-    "x86_64-apple-darwin" => "8e30fb72a59f0a657c8f4eecde69485596cb83d6eb831e54515a81b5d0b6d071",
-    "aarch64-unknown-linux-musl" => "0c332a1c9f05330ac24598dd29ddc15819c5a5783b8e95ef513a7fa3921675b1",
-    "x86_64-unknown-linux-musl" => "96081fa567496aa95c755cc4ff8e3366adc7f7da9db72525e18a57bf5b44d607",
+    "macos-aarch64" => "c7d1d5b060fad53ea3c9eac9deb6d1ea20a22d441ec3494cd5a18fe6f7bbb215",
+    "macos-x86_64" => "c0a5e9973a89258d3b8a28afd957d36c3fdef2f664dab4647a29c0501f062ab0",
+    "linux-aarch64-musl" => "6b1df01356be386ea4b7b48c54039d784c5253f1f66f3880ce325fae43678d54",
+    "linux-x86_64-musl" => "2da23771792881a82109a3669ed4f882af5061bc05734ccf9619ba815e9f33ac",
   }.freeze
 
   desc "High-performance distributed object storage written in Rust"
   homepage "https://rustfs.com"
   url "https://github.com/#{GITHUB_REPO}/archive/refs/tags/#{VERSION}.tar.gz"
-  sha256 "25254ec106022f290b7e74c8f8ada879cdc2cf2953bd170258e1fab54edf14c3"
+  sha256 "b8962ae1cded089ae0d59b11afabe1015646d006124156bc7ac1cb9773b9e1ae"
   license "Apache-2.0"
 
   def install
@@ -75,17 +75,18 @@ class Rustfs < Formula
 
   def system_target
     @system_target ||= begin
-                         os = OS.mac? ? "apple-darwin" : "unknown-linux-musl"
+                         os = OS.mac? ? "macos" : "linux"
                          arch = Hardware::CPU.arch == :arm ? "aarch64" : "x86_64"
-                         "#{arch}-#{os}"
+                         content = OS.mac? ? "#{arch}-#{os}" : "#{arch}-#{os}-musl"
+                         content
                        end
   end
-
+  
   def binary_url_and_sha
     target = system_target
     sha256 = BINARIES[target]
     return [nil, nil] unless sha256
-    url = "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-#{target}.zip"
+    url = "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-#{target}-#{VERSION}.zip"
     [url, sha256]
   end
 end
