@@ -1,5 +1,5 @@
 class Rustfs < Formula
-  VERSION = "1.0.0-alpha.37".freeze
+  VERSION = "1.0.0-alpha.61".freeze
   GITHUB_REPO = "rustfs/rustfs".freeze
   BINARIES = {
     "macos-aarch64" => "c7d1d5b060fad53ea3c9eac9deb6d1ea20a22d441ec3494cd5a18fe6f7bbb215",
