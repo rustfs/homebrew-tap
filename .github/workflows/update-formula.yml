@@ -1,0 +1,49 @@
+name: Update Homebrew Formula
+
+on:
+  schedule:
+    - cron: '0 */12 * * *' # twice a day
+  workflow_dispatch: {}
+  repository_dispatch:
+    types: [release]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Run updater
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_UPSTREAM_REPO: rustfs/rustfs
+        run: |
+          ruby scripts/update_formula.rb
+
+      - name: Read latest version
+        id: v
+        run: echo "version=$(cat .latest_version)" >> $GITHUB_OUTPUT
+
+      - name: Cleanup temporary files
+        run: rm -f .latest_version
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: bump rustfs formula to ${{ steps.v.outputs.version }}"
+          title: "chore: bump rustfs to ${{ steps.v.outputs.version }}"
+          body: |
+            Automated update to latest release ${{ steps.v.outputs.version }}.
+          branch: "update/rustfs-${{ steps.v.outputs.version }}"
+          delete-branch: true

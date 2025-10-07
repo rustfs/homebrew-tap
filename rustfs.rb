@@ -92,4 +92,13 @@ class Rustfs < Formula
     url = "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-#{target}-v#{VERSION}.zip"
     [url, sha256]
   end
+
+  # Note: Homebrew formulas must be reproducible and cannot hit the network
+  # to determine versions at install time. This livecheck tells `brew livecheck`
+  # to use GitHub releases to find new versions. We also provide a workflow in
+  # this tap to automatically bump this formula when a new release appears.
+  livecheck do
+    url :stable
+    strategy :github_latest
+  end
 end
