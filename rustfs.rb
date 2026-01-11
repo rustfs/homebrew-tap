@@ -77,7 +77,7 @@ class Rustfs < Formula
     @system_target ||= begin
                          os = OS.mac? ? "macos" : "linux"
                          arch = case Hardware::CPU.arch
-                                when :arm, :aarch64 then "aarch64"
+                                when :arm, :arm64, :aarch64 then "aarch64"
                                 else "x86_64"
                                 end
                          suffix = OS.mac? ? "" : "-musl"
