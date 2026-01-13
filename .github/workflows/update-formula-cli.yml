@@ -1,4 +1,4 @@
-name: Update Homebrew Formula For RustFS
+name: Update Homebrew Formula For RustFS-ClI
 
 on:
   schedule:
@@ -21,14 +21,15 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
+          ruby-version: "3.4"
+          bundler-cache: true
 
       - name: Run updater
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_UPSTREAM_REPO: rustfs/rustfs
+          GITHUB_UPSTREAM_REPO: rustfs/cli
         run: |
-          ruby scripts/update_formula.rb
+          ruby scripts/update_formula_cli.rb
 
       - name: Read latest version
         id: v
@@ -41,9 +42,9 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: bump rustfs formula to ${{ steps.v.outputs.version }}"
-          title: "chore: bump rustfs to ${{ steps.v.outputs.version }}"
+          commit-message: "chore: bump rustfs cli formula to ${{ steps.v.outputs.version }}"
+          title: "chore: bump rustfs cli to ${{ steps.v.outputs.version }}"
           body: |
             Automated update to latest release ${{ steps.v.outputs.version }}.
-          branch: "update/rustfs-${{ steps.v.outputs.version }}"
+          branch: "update/rustfs-cli-${{ steps.v.outputs.version }}"
           delete-branch: true
