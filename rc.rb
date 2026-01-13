@@ -1,5 +1,5 @@
 class Rc < Formula
-  VERSION = "v0.1.1".freeze
+  VERSION = "0.1.1".freeze
   GITHUB_REPO = "rustfs/cli".freeze
   BINARIES = {
     "macos-arm64" => "8ba6e2eb3a258227f6ba9268a9a86c9ef903cb38fa9ba3f9804bbf4b0e960950",
