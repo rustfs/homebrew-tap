@@ -31,6 +31,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -51,6 +53,9 @@ jobs:
 
       - name: Cleanup temporary files
         run: rm -f .latest_version
+
+      - name: Clean up Git credentials
+        run: git config --local --unset-all http.https://github.com/.extraheader || true
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
