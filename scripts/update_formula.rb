@@ -1,3 +1,17 @@
+# Copyright 2024 RustFS Team
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
@@ -92,22 +106,22 @@ def compute_artifacts_sha_map(release, version)
 end
 
 def compute_source_tarball_sha(repo, tag_or_version)
-    candidates = [tag_or_version]
-    candidates << "v#{tag_or_version}" unless tag_or_version.start_with?('v')
+  candidates = [tag_or_version]
+  candidates << "v#{tag_or_version}" unless tag_or_version.start_with?('v')
 
-    last_error = nil
-    candidates.each do |tag|
-        url = "https://github.com/#{repo}/archive/refs/tags/#{tag}.tar.gz"
-        puts "Computing source tarball sha256 for #{url} ..."
-        begin
-            return http_stream_digest(url)
-        rescue SystemExit => e
-            last_error = e
-            warn "Failed for #{tag}, trying next candidate if any..."
-            next
-        end
+  last_error = nil
+  candidates.each do |tag|
+    url = "https://github.com/#{repo}/archive/refs/tags/#{tag}.tar.gz"
+    puts "Computing source tarball sha256 for #{url} ..."
+    begin
+      return http_stream_digest(url)
+    rescue SystemExit => e
+      last_error = e
+      warn "Failed for #{tag}, trying next candidate if any..."
+      next
     end
-    abort("Failed to compute source tarball sha256: #{last_error}")
+  end
+  abort("Failed to compute source tarball sha256: #{last_error}")
 end
 
 def update_formula_file(path, version, source_sha, artifacts_sha)
