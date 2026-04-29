@@ -16,10 +16,10 @@ class Rustfs < Formula
   VERSION = "1.0.0-beta.1".freeze
   GITHUB_REPO = "rustfs/rustfs".freeze
   BINARIES = {
-    "macos-aarch64" => "924a99765543f93bdda68adeb51e4809cdfaf1272c858964d6241060d1358b13",
-    "macos-x86_64" => "9867019938d90efbbe8fa8d683d5e160315763ecf435089d4a0222d0e843a4d1",
-    "linux-aarch64-musl" => "fcc78f7487bae13f89b71721acefca39404f39ef7b271fc511358daf757831f3",
-    "linux-x86_64-musl" => "1d0d98dcd40bf11caf0df8cbb845faa9b304c6062b1ae525e16373570bc6a28e",
+    "macos-aarch64" => "8d1c2f6340163f9876472d17328aa78527fbcc0c5c09b7b2860edfdfce5d40cf",
+    "macos-x86_64" => "87bace346fdc94f17b720b25e9e8c040df38ef27d751d92a46098ff1ec9c8b59",
+    "linux-aarch64-musl" => "6e713e278f1f77b35a09c8c2a1cf28e783591964b1ba85142d0398fd79c7af7a",
+    "linux-x86_64-musl" => "a8a6dbea594eecd52bf57f1f0507b86225b40ddb3e74962f4e4b34fe8f4682d4",
   }.freeze
 
   desc "High-performance distributed object storage written in Rust"
