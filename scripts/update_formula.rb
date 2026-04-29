@@ -167,7 +167,7 @@ ENV['LATEST_VERSION'] = version
 version_file = File.expand_path('../.latest_version', __dir__)
 File.write(version_file, version)
 
-source_sha = compute_source_tarball_sha(REPO, tag)
+source_sha = compute_source_tarball_sha(REPO, version)
 artifacts_sha = compute_artifacts_sha_map(rel, version)
 
 changed = update_formula_file(FORMULA_PATH, version, source_sha, artifacts_sha)
