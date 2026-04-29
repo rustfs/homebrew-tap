@@ -24,7 +24,7 @@ class Rustfs < Formula
 
   desc "High-performance distributed object storage written in Rust"
   homepage "https://rustfs.com"
-  url "https://github.com/#{GITHUB_REPO}/archive/refs/tags/#{VERSION}.tar.gz"
+  url "https://github.com/#{GITHUB_REPO}/archive/refs/tags/v#{VERSION}.tar.gz"
   sha256 "c45340775a34b221f151362ef252b2bab5c8ff80ad07b437566200117400a37f"
   license "Apache-2.0"
 
@@ -103,7 +103,7 @@ class Rustfs < Formula
     target = system_target
     sha256 = BINARIES[target]
     return [nil, nil] unless sha256
-    url = "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-#{target}-v#{VERSION}.zip"
+    url = "https://github.com/#{GITHUB_REPO}/releases/download/v#{VERSION}/rustfs-#{target}-v#{VERSION}.zip"
     [url, sha256]
   end
 
