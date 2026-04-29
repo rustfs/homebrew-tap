@@ -16,10 +16,10 @@ class Rc < Formula
   VERSION = "0.1.12".freeze
   GITHUB_REPO = "rustfs/cli".freeze
   BINARIES = {
-    "macos-arm64" => "49de4fe9763647933f3a655ec7259c8e3e490080373ccf8585d7e277a1ed835f",
-    "macos-amd64" => "a81e4b4bcfe4df1f30639e4d5dfa71318afca081449750479eb4b8b7bfa63bc8",
-    "linux-arm64" => "2ff4d42cc8b90b8525d1cc7d5dea6a5c9b1195fd6f80dffe9c13b196cdb0f0a4",
-    "linux-amd64" => "1956cd6a041a9e8e3349c822809024a7e62195fc734e61e087262e08f2d8e771",
+    "macos-arm64" => "45bdd9cfb5d4ea434b522b5c70212b0a670046aca79f27c48962ef9216204fc1",
+    "macos-amd64" => "4e300a370cf8734dc15a84c4076ad0e0add57328cee790bc8c949bc0ef474c2d",
+    "linux-arm64" => "d25f5dbc428c096dd698fe5a8f94f349e7e68687733c0ab5aab099a4533236e9",
+    "linux-amd64" => "d4ba963b10aad7e8ecbd683c39ec4c1d0ac142164c619681d84f204571c73a20",
   }.freeze
 
   desc "A S3-compatible command-line client written in Rust."
