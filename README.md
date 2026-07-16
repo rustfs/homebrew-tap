@@ -78,7 +78,6 @@ We provide pre-compiled binaries for the following platforms:
 
 - **macOS**
     - Apple Silicon (`arm64`)
-    - Intel (`x86_64`)
 - **Linux**
     - ARM (`aarch64`)
     - Intel/AMD (`x86_64`)

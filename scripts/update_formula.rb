@@ -26,7 +26,6 @@ FORMULA_PATH = ENV.fetch('FORMULA_PATH', File.expand_path('../rustfs.rb', __dir_
 
 TARGETS = [
   'macos-aarch64',
-  'macos-x86_64',
   'linux-aarch64-musl',
   'linux-x86_64-musl'
 ].freeze

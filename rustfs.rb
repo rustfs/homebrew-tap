@@ -17,7 +17,6 @@ class Rustfs < Formula
   GITHUB_REPO = "rustfs/rustfs".freeze
   BINARIES = {
     "macos-aarch64" => "a51844a9ed881b026bea2204162b0c4929f15aa2763c5a5a1117e06923393590",
-    "macos-x86_64" => "93c860bfb32df84acad556786d2fbae8317b9c8df8cf449b9e97d7eaa1fdba11",
     "linux-aarch64-musl" => "2b863c36d31ed1ed8708108f92a0f59d510d2a213b64d02ca5310577afb1c7c5",
     "linux-x86_64-musl" => "244e1fe098456938627f5cebbeed76033c7c862fec4dc52c386e4577a7edca39",
   }.freeze
@@ -29,6 +28,8 @@ class Rustfs < Formula
   license "Apache-2.0"
 
   def install
+    odie "macOS Intel (x86_64) is not supported by this formula." if system_target == "macos-x86_64"
+
     url, sha = binary_url_and_sha
     odie "This formula has no pre-compiled binary for your platform: #{system_target}" unless url
 
