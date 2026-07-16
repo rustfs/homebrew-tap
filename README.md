@@ -74,13 +74,22 @@ For more detailed usage and documentation, please visit the official website: [h
 
 ## Supported Platforms
 
-We provide pre-compiled binaries for the following platforms:
+RustFS provides pre-compiled binaries for the following platforms:
 
 - **macOS**
     - Apple Silicon (`arm64`)
 - **Linux**
     - ARM (`aarch64`)
     - Intel/AMD (`x86_64`)
+
+RustFS-cli (`rc`) provides pre-compiled binaries for the following platforms:
+
+- **macOS**
+    - Apple Silicon (`arm64`)
+    - Intel (`amd64`)
+- **Linux**
+    - ARM (`arm64`)
+    - Intel/AMD (`amd64`)
 
 ## Contributing
 

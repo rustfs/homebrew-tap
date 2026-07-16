@@ -74,13 +74,22 @@ rc --help
 
 ## 支持平台
 
-我们为以下平台提供预编译的二进制文件：
+RustFS 为以下平台提供预编译的二进制文件：
 
 - **macOS**
     - Apple Silicon (`arm64`)
 - **Linux**
     - ARM (`aarch64`)
     - Intel/AMD (`x86_64`)
+
+RustFS-cli (`rc`) 为以下平台提供预编译的二进制文件：
+
+- **macOS**
+    - Apple Silicon (`arm64`)
+    - Intel (`amd64`)
+- **Linux**
+    - ARM (`arm64`)
+    - Intel/AMD (`amd64`)
 
 ## 贡献
 

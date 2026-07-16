@@ -62,10 +62,10 @@ class Rc < Formula
          cd cli
 
       2. Compile the project:
-         cargo build --release
+         cargo build --release -p rustfs-cli
 
-      4. The binary will be located at:
-         ./target/release/cli
+      3. The binary will be located at:
+         ./target/release/rc
 
       === Additional Notes ===
       If you encounter issues with missing dependencies, ensure the following are installed:
