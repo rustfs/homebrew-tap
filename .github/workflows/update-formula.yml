@@ -25,19 +25,24 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: update-rustfs-formula
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
+          ruby-version: '4.0.6'
+          bundler-cache: true
 
       - name: Run updater
         env:
@@ -46,21 +51,32 @@ jobs:
         run: |
           ruby scripts/update_formula.rb
 
+      - name: Validate formula and updater
+        run: |
+          ruby -c rustfs.rb
+          ruby -c scripts/formula_updater.rb
+          ruby -c scripts/update_formula.rb
+
       - name: Read latest version
         id: v
         run: echo "version=$(cat .latest_version)" >> $GITHUB_OUTPUT
 
       - name: Cleanup temporary files
+        if: always()
         run: rm -f .latest_version
 
       - name: Clean up Git credentials
+        if: always()
         run: git config --local --unset-all http.https://github.com/.extraheader || true
-        
+
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: rustfs.rb
           commit-message: "chore: bump rustfs formula to ${{ steps.v.outputs.version }}"
+          committer: "houseme <housemecn@gmail.com>"
+          author: "houseme <housemecn@gmail.com>"
           title: "chore: bump rustfs to ${{ steps.v.outputs.version }}"
           body: |
             Automated update to latest release ${{ steps.v.outputs.version }}.
