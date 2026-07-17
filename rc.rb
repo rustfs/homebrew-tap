@@ -13,19 +13,19 @@
 # limitations under the License.
 
 class Rc < Formula
-  VERSION = "0.1.27".freeze
+  VERSION = "0.1.28".freeze
   GITHUB_REPO = "rustfs/cli".freeze
   BINARIES = {
-    "macos-arm64" => "03c99d95b11603064d200af425c9ea2bebe274f246f0b682e148a5ce3752c053",
-    "macos-amd64" => "6b0de3fcf6d694f31462c6ed53075429ff9e6b575c245e5500c61ed6bb7751b4",
-    "linux-arm64" => "de38254f583f10e9bd27ecc17870d20bb294288d3a80f71dc1966310ec8c9a53",
-    "linux-amd64" => "6457af688f35bb9817571ba677976a8d0b6ac74ad9b82eea0dc32c17d0bd1f56",
+    "macos-arm64" => "5a80bf62e6dbcd36b63742fac2cbe2d8fbf141e31827b5f757e1ffedde6aabfb",
+    "macos-amd64" => "61219334f902b99edee54508067d7a9e8530f9648b3aad75afb14dedea181444",
+    "linux-arm64" => "117315b419c71cdf01b61c1b14171f0a43d0ce7d4a2b10001ddcfa58c0165320",
+    "linux-amd64" => "3c53efbc7a575cb2d7a695692b5b5c26e6e413fa20a184a1e6d49448e823e260",
   }.freeze
 
   desc "A S3-compatible command-line client written in Rust."
   homepage "https://rustfs.com"
   url "https://github.com/#{GITHUB_REPO}/archive/refs/tags/v#{VERSION}.tar.gz"
-  sha256 "c5a1bbb7d547781b1de8f31c21658ce8357d5ff586029eef530a7f1a8d171478"
+  sha256 "622c313d01cfe9171f587c572b590f4518613a07fae31d055d0d15a504a9c73d"
   license "Apache-2.0 or MIT"
 
   def install
