@@ -10,27 +10,32 @@
 
 ### 通过 Homebrew (推荐)
 
-这是最简单的安装方式。
+可直接安装，Homebrew 会自动添加 Tap。
 
-1. **添加 Tap:**
+1. **安装 RustFS:**
    ```sh
-   brew tap rustfs/homebrew-tap
+   brew install rustfs/homebrew-tap/rustfs
    ```
 
-2. **安装 RustFS:**
+2. **安装 RustFS-cli:**
    ```sh
-   brew install rustfs
+   brew install rustfs/homebrew-tap/rc
    ```
 
-3. **安装 RustFS-cli:**
-   ```sh
-   brew install rc
-   ```
-
-4. **更新 RustFS 及 RustFS-cli:**
+3. **更新 RustFS 及 RustFS-cli:**
    ```sh
    brew upgrade rustfs rc
    ```
+
+### 通过 Cargo
+
+已安装兼容 Rust 工具链时，可直接从 crates.io 安装 RustFS：
+
+```sh
+cargo install rustfs
+```
+
+Cargo 会自动解析 Rust 依赖。
 
 ### 手动安装
 

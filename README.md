@@ -10,27 +10,32 @@ You can install `RustFS` and `RustFS-cli` in several ways.
 
 ### Via Homebrew (Recommended)
 
-This is the easiest way to get started.
+Install directly; Homebrew adds the Tap automatically.
 
-1. **Add the Tap:**
+1. **Install RustFS:**
    ```sh
-   brew tap rustfs/homebrew-tap
+   brew install rustfs/homebrew-tap/rustfs
    ```
 
-2. **Install RustFS:**
+2. **Install RustFS-cli:**
    ```sh
-   brew install rustfs
+   brew install rustfs/homebrew-tap/rc
    ```
 
-3. **Install RustFS-cli:**
-   ```sh
-   brew install rc
-   ```
-
-4. **Update RustFS and RustFS-cli:**
+3. **Update RustFS and RustFS-cli:**
    ```sh
    brew upgrade rustfs rc
    ```
+
+### Via Cargo
+
+With a compatible Rust toolchain, install RustFS directly from crates.io:
+
+```sh
+cargo install rustfs
+```
+
+Cargo resolves Rust dependencies automatically.
 
 ### Manual Installation
 

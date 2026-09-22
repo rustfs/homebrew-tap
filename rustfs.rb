@@ -28,10 +28,14 @@ class Rustfs < Formula
   license "Apache-2.0"
 
   def install
-    odie "macOS Intel (x86_64) is not supported by this formula." if system_target == "macos-x86_64"
+    if system_target == "macos-x86_64"
+      odie "macOS Intel (x86_64) is not supported by this formula. Install from crates.io instead: cargo install rustfs"
+    end
 
     url, sha = binary_url_and_sha
-    odie "This formula has no pre-compiled binary for your platform: #{system_target}" unless url
+    unless url
+      odie "This formula has no pre-compiled binary for your platform: #{system_target}. Install from crates.io instead: cargo install rustfs"
+    end
 
     ohai "Installing from pre-compiled binary..."
     resource "binary" do
@@ -55,29 +59,11 @@ class Rustfs < Formula
       # Check the version:
       rustfs --version
 
-      === Developer Guide ===
-      If you want to build from source manually:
+      === Alternative Installation ===
+      To build and install RustFS directly from crates.io, use Cargo:
+        cargo install rustfs
 
-      1. Clone the repository:
-         git clone https://github.com/#{GITHUB_REPO}.git
-         cd rustfs
-
-      2. Install dependencies:
-         brew install rust protobuf flatbuffers pkg-config zstd openssl@3
-
-      3. Compile the project:
-         cargo build --release
-
-      4. The binary will be located at:
-         ./target/release/rustfs
-
-      === Additional Notes ===
-      If you encounter issues with missing dependencies, ensure the following are installed:
-      - Rust: brew install rust
-      - Protobuf: brew install protobuf
-      - Flatbuffers: brew install flatbuffers
-      - OpenSSL: brew install openssl@3
-      - Zstd: brew install zstd
+      Cargo resolves Rust dependencies automatically. Use a compatible Rust toolchain.
     EOS
   end
 
