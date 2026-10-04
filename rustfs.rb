@@ -27,22 +27,41 @@ class Rustfs < Formula
   sha256 "612ae16743723de917d9c8aadfe06aac8516bd9cc2f648d2679128561cb1fe28"
   license "Apache-2.0"
 
+  on_macos do
+    on_arm do
+      resource "binary" do
+        url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-macos-aarch64-v#{VERSION}.zip"
+        sha256 BINARIES["macos-aarch64"]
+      end
+    end
+  end
+
+  on_linux do
+    on_arm do
+      resource "binary" do
+        url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-linux-aarch64-musl-v#{VERSION}.zip"
+        sha256 BINARIES["linux-aarch64-musl"]
+      end
+    end
+
+    on_intel do
+      resource "binary" do
+        url "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-linux-x86_64-musl-v#{VERSION}.zip"
+        sha256 BINARIES["linux-x86_64-musl"]
+      end
+    end
+  end
+
   def install
     if system_target == "macos-x86_64"
       odie "macOS Intel (x86_64) is not supported by this formula. Install from crates.io instead: cargo install rustfs"
     end
 
-    url, sha = binary_url_and_sha
-    unless url
+    unless BINARIES.key?(system_target)
       odie "This formula has no pre-compiled binary for your platform: #{system_target}. Install from crates.io instead: cargo install rustfs"
     end
 
     ohai "Installing from pre-compiled binary..."
-    resource "binary" do
-      url url
-      sha256 sha
-    end
-
     resource("binary").stage do
       bin.install "rustfs"
     end
@@ -84,14 +103,6 @@ class Rustfs < Formula
                          suffix = OS.mac? ? "" : "-musl"
                          "#{os}-#{arch}#{suffix}"
                        end
-  end
-
-  def binary_url_and_sha
-    target = system_target
-    sha256 = BINARIES[target]
-    return [nil, nil] unless sha256
-    url = "https://github.com/#{GITHUB_REPO}/releases/download/#{VERSION}/rustfs-#{target}-v#{VERSION}.zip"
-    [url, sha256]
   end
 
   # Note: Homebrew formulas must be reproducible and cannot hit the network
