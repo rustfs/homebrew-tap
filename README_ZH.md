@@ -48,7 +48,7 @@ Cargo 会自动解析 Rust 依赖。
 #### RustFS-cli
 
 1. 前往 [RustFS-cli Releases](https://github.com/rustfs/cli/releases) 页面。
-2. 根据您的操作系统和 CPU 架构，下载对应的 `.zip` 压缩包。
+2. 根据您的操作系统和 CPU 架构，下载对应的 `.tar.gz` 压缩包。
 3. 解压文件，并将得到的 `rc` 可执行文件移动到您的 `PATH` 环境变量下的任一目录中 (例如 `/usr/local/bin`)。
 
 ## 使用方法

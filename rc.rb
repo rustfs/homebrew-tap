@@ -28,16 +28,42 @@ class Rc < Formula
   sha256 "b48a2161452a078f1629e43c5c17a0e5a03deec8fde22ae4972e51166ed591dc"
   license "Apache-2.0 or MIT"
 
-  def install
-    url, sha = binary_url_and_sha
-    odie "This formula has no pre-compiled binary for your platform: #{system_target}" unless url
-
-    ohai "Installing from pre-compiled binary..."
-    resource "binary" do
-      url url
-      sha256 sha
+  on_macos do
+    on_arm do
+      resource "binary" do
+        url "https://github.com/#{GITHUB_REPO}/releases/download/v#{VERSION}/rustfs-cli-macos-arm64-v#{VERSION}.tar.gz"
+        sha256 BINARIES["macos-arm64"]
+      end
     end
 
+    on_intel do
+      resource "binary" do
+        url "https://github.com/#{GITHUB_REPO}/releases/download/v#{VERSION}/rustfs-cli-macos-amd64-v#{VERSION}.tar.gz"
+        sha256 BINARIES["macos-amd64"]
+      end
+    end
+  end
+
+  on_linux do
+    on_arm do
+      resource "binary" do
+        url "https://github.com/#{GITHUB_REPO}/releases/download/v#{VERSION}/rustfs-cli-linux-arm64-v#{VERSION}.tar.gz"
+        sha256 BINARIES["linux-arm64"]
+      end
+    end
+
+    on_intel do
+      resource "binary" do
+        url "https://github.com/#{GITHUB_REPO}/releases/download/v#{VERSION}/rustfs-cli-linux-amd64-v#{VERSION}.tar.gz"
+        sha256 BINARIES["linux-amd64"]
+      end
+    end
+  end
+
+  def install
+    odie "This formula has no pre-compiled binary for your platform: #{system_target}" unless BINARIES.key?(system_target)
+
+    ohai "Installing from pre-compiled binary..."
     resource("binary").stage do
       bin.install "rc"
     end
@@ -89,14 +115,6 @@ class Rc < Formula
                                 end
                          "#{os}-#{arch}"
                        end
-  end
-
-  def binary_url_and_sha
-    target = system_target
-    sha256 = BINARIES[target]
-    return [nil, nil] unless sha256
-    url = "https://github.com/#{GITHUB_REPO}/releases/download/v#{VERSION}/rustfs-cli-#{target}-v#{VERSION}.tar.gz"
-    [url, sha256]
   end
 
   # Note: Homebrew formulas must be reproducible and cannot hit the network

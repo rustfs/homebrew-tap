@@ -12,26 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Update Homebrew Formula For RustFS
+name: Update Homebrew Formulas
 
 on:
   schedule:
-    - cron: '0 */12 * * *' # twice a day
-  workflow_dispatch: { }
+    - cron: '0 */12 * * *'
+  workflow_dispatch: {}
   repository_dispatch:
-    types: [ release ]
+    types: [release]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
-  group: update-rustfs-formula
+  group: update-homebrew-formulas
   cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - formula: rustfs
+            path: rustfs.rb
+          - formula: rc
+            path: rc.rb
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -41,44 +51,31 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '4.0.6'
-          bundler-cache: true
+          ruby-version: '3.4'
 
-      - name: Run updater
+      - name: Update formula
+        id: update
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_UPSTREAM_REPO: rustfs/rustfs
-        run: |
-          ruby scripts/update_formula.rb
+          FORMULA: ${{ matrix.formula }}
+        run: ruby scripts/update_formula.rb "$FORMULA"
 
-      - name: Validate formula and updater
+      - name: Validate formulas and updater
         run: |
+          ruby -c rc.rb
           ruby -c rustfs.rb
           ruby -c scripts/formula_updater.rb
           ruby -c scripts/update_formula.rb
-
-      - name: Read latest version
-        id: v
-        run: echo "version=$(cat .latest_version)" >> $GITHUB_OUTPUT
-
-      - name: Cleanup temporary files
-        if: always()
-        run: rm -f .latest_version
-
-      - name: Clean up Git credentials
-        if: always()
-        run: git config --local --unset-all http.https://github.com/.extraheader || true
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          add-paths: rustfs.rb
-          commit-message: "chore: bump rustfs formula to ${{ steps.v.outputs.version }}"
+          add-paths: ${{ matrix.path }}
+          commit-message: "chore: bump ${{ matrix.formula }} formula to ${{ steps.update.outputs.version }}"
           committer: "houseme <housemecn@gmail.com>"
           author: "houseme <housemecn@gmail.com>"
-          title: "chore: bump rustfs to ${{ steps.v.outputs.version }}"
+          title: "chore: bump ${{ matrix.formula }} formula to ${{ steps.update.outputs.version }}"
           body: |
-            Automated update to latest release ${{ steps.v.outputs.version }}.
-          branch: "update/rustfs-${{ steps.v.outputs.version }}"
+            Automated update to the latest ${{ matrix.formula }} release ${{ steps.update.outputs.version }}.
+          branch: "update/${{ matrix.formula }}-${{ steps.update.outputs.version }}"
           delete-branch: true

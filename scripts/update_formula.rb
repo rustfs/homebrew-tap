@@ -17,14 +17,26 @@
 
 require_relative 'formula_updater'
 
-FormulaUpdater.run(
-  repo: ENV.fetch('GITHUB_UPSTREAM_REPO', 'rustfs/rustfs'),
-  formula_path: ENV.fetch('FORMULA_PATH', File.expand_path('../rustfs.rb', __dir__)),
-  targets: [
-    'macos-aarch64',
-    'linux-aarch64-musl',
-    'linux-x86_64-musl',
-  ],
-  artifact_name: ->(target, version) { "rustfs-#{target}-v#{version}.zip" },
-  allow_prerelease: true,
-)
+FORMULAS = {
+  'rustfs' => {
+    repo: 'rustfs/rustfs',
+    formula_path: File.expand_path('../rustfs.rb', __dir__),
+    targets: %w[macos-aarch64 linux-aarch64-musl linux-x86_64-musl],
+    artifact_name: ->(target, version) { "rustfs-#{target}-v#{version}.zip" },
+    allow_prerelease: true,
+  },
+  'rc' => {
+    repo: 'rustfs/cli',
+    formula_path: File.expand_path('../rc.rb', __dir__),
+    targets: %w[macos-arm64 macos-amd64 linux-arm64 linux-amd64],
+    artifact_name: ->(target, version) { "rustfs-cli-#{target}-v#{version}.tar.gz" },
+    allow_prerelease: false,
+  },
+}.freeze
+
+abort 'Usage: ruby scripts/update_formula.rb <rustfs|rc>' unless ARGV.length == 1
+
+formula_name = ARGV.fetch(0)
+config = FORMULAS[formula_name] || abort("Unknown formula: #{formula_name}")
+
+FormulaUpdater.run(config)

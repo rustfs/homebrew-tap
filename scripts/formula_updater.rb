@@ -26,14 +26,21 @@ module FormulaUpdater
     release = latest_release(config)
     tag = release.fetch('tag_name')
     version = normalize_version(tag)
+    formula_path = config.fetch(:formula_path)
 
-    write_version_file(version)
+    if formula_version(formula_path) == version
+      puts "Formula already tracks #{version}; skipping archive downloads."
+      write_version_output(version)
+      return version
+    end
 
-    source_sha = compute_source_tarball_sha(config.fetch(:repo), version)
+    source_sha = compute_source_tarball_sha(config.fetch(:repo), tag)
     artifact_shas = compute_artifact_sha_map(release, version, config)
 
-    changed = update_formula_file(config.fetch(:formula_path), version, source_sha, artifact_shas)
+    changed = update_formula_file(formula_path, version, source_sha, artifact_shas)
     puts "Updated formula to version #{version}" if changed
+    write_version_output(version)
+    version
   end
 
   def latest_release(config)
@@ -69,6 +76,14 @@ module FormulaUpdater
     tag_name.sub(/^v/, '')
   end
 
+  def formula_version(path)
+    content = File.read(path)
+    match = content.match(/^\s*VERSION\s*=\s*"([^"]+)"\.freeze$/)
+    abort "Failed to read formula version from #{path}" unless match
+
+    match[1]
+  end
+
   def compute_artifact_sha_map(release, version, config)
     assets = release.fetch('assets', [])
     shas = {}
@@ -86,7 +101,12 @@ module FormulaUpdater
 
   def asset_sha(asset)
     digest = asset['digest']
-    return digest.delete_prefix('sha256:') if digest&.start_with?('sha256:')
+    if digest&.start_with?('sha256:')
+      sha = digest.delete_prefix('sha256:')
+      abort "Invalid SHA-256 digest for #{asset.fetch('name')}" unless sha.match?(/\A[0-9a-f]{64}\z/)
+
+      return sha
+    end
 
     url = asset.fetch('browser_download_url')
     puts "Computing sha256 for #{asset.fetch('name')} ..."
@@ -143,17 +163,11 @@ module FormulaUpdater
     true
   end
 
-  def write_version_file(version)
-    ENV['LATEST_VERSION'] = version
-    version_file = File.expand_path('../.latest_version', __dir__)
-    File.write(version_file, version)
-  end
-
   def http_get_json(url)
     uri = URI(url)
     req = Net::HTTP::Get.new(uri)
     token = ENV['GITHUB_TOKEN'] || ENV['HOMEBREW_GITHUB_API_TOKEN']
-    req['Authorization'] = "token #{token}" if token && !token.empty?
+    req['Authorization'] = "Bearer #{token}" if token && !token.empty?
     req['User-Agent'] = 'rustfs-homebrew-tap-updater'
     req['Accept'] = 'application/vnd.github+json'
 
@@ -165,19 +179,22 @@ module FormulaUpdater
     end
   end
 
-  def http_stream_digest(url)
+  def http_stream_digest(url, redirects: 0)
     uri = URI(url)
+    abort "Refusing non-HTTPS download URL: #{url}" unless uri.is_a?(URI::HTTPS)
+
     digest = Digest::SHA256.new
     headers = { 'User-Agent' => 'rustfs-homebrew-tap-updater' }
-    token = ENV['GITHUB_TOKEN'] || ENV['HOMEBREW_GITHUB_API_TOKEN']
-    headers['Authorization'] = "token #{token}" if token && !token.empty?
 
     Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https') do |http|
       request = Net::HTTP::Get.new(uri.request_uri, headers)
       http.request(request) do |response|
         case response
         when Net::HTTPRedirection
-          return http_stream_digest(response['location'])
+          abort "Too many redirects while downloading #{url}" if redirects >= 5
+
+          redirect_url = URI.join(uri.to_s, response.fetch('location')).to_s
+          return http_stream_digest(redirect_url, redirects: redirects + 1)
         when Net::HTTPSuccess
           response.read_body { |chunk| digest.update(chunk) }
         else
@@ -194,5 +211,12 @@ module FormulaUpdater
     return default if value.nil? || value.empty?
 
     %w[1 true yes on].include?(value.downcase)
+  end
+
+  def write_version_output(version)
+    output = ENV['GITHUB_OUTPUT']
+    return unless output && !output.empty?
+
+    File.open(output, 'a') { |file| file.puts("version=#{version}") }
   end
 end
