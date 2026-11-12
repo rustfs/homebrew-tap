@@ -23,7 +23,8 @@ FORMULAS = {
     formula_path: File.expand_path('../rustfs.rb', __dir__),
     targets: %w[macos-aarch64 linux-aarch64-musl linux-x86_64-musl],
     artifact_name: ->(target, version) { "rustfs-#{target}-v#{version}.zip" },
-    allow_prerelease: true,
+    # Stable GitHub releases only. Preview/beta tags must not be written into rustfs.rb.
+    allow_prerelease: false,
   },
   'rc' => {
     repo: 'rustfs/cli',
